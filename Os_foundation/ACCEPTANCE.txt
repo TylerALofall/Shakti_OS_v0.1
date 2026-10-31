@@ -1,0 +1,165 @@
+SHAKTI OS FOUNDATION v0.1 - ACCEPTANCE GATES
+
+ALL IMPLEMENTATION TESTS BELOW ARE NOT RUN.
+These are required tests and expected outcomes, not passing receipts.
+This file must not be handed to an agent as proof of an existing build.
+
+G0. CONTRACTS AND TOOLCHAIN
+Confirm exact source set, no hidden include paths or command-line overrides,
+compiler/assembler/linker identities, source provenance, runtime imports,
+bootstrap chain, license obligations, and every architecture exception.
+Reject GCC and unapproved build scripts. Inspect allocation behavior of
+the tools themselves before claiming a zero-heap build environment.
+Compile deliberate non-C99 and invalid-input fixtures; rejection must be
+observed. Check the selected ABI, all fixed-width types, and size_t width.
+Exercise large fixed reservations and both boot/foundation output formats.
+Inspect generated machine instructions and external references. Record the
+declared conditions under which repeated builds produce identical bytes.
+
+G1. PORTABLE CORE AND SERIALIZATION
+Addition: UINT64_MAX + 1 returns OVERFLOW; output is zero.
+Multiplication: UINT64_MAX * 2 returns OVERFLOW; output is zero.
+Span(capacity16, offset16, length0) succeeds.
+Span(capacity16, offset16, length1) returns RANGE.
+Span(capacity16, offsetUINT64_MAX, length2) rejects without wrapping.
+Overlapping byte-copy tests verify memmove semantics in both directions.
+Null/zero rules follow CONTRACTS.txt; nonzero null inputs reject.
+
+CRC32C known answers:
+  empty input: 00000000
+  ASCII 123456789: E3069283
+SHA-256 known answers:
+  empty input:
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  ASCII abc:
+  ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+Hash a multi-block message in every bounded split position; its streaming
+and independently established expected digest must match. Exercise final
+length and finalized-context rejection. Do not use the implementation
+under test as the only oracle for its own expected values.
+
+Envelope83: confirm the twelve-byte example in CONTRACTS.txt, independent
+CRC verification, all gate values, padding-bit rejection, vector overflow,
+stale generation rejection, and no authority from gate CONFIRMED.
+Unknown dispatch channel rejects even when the envelope checksum is valid.
+Mutate each reserved field and confirm the specified rejection order.
+Request/response/trace/flow encoding uses explicit golden byte arrays,
+checked independently before testing the implementation.
+
+Unit17: rows1 and4; chunks1 and8; total32; zero-valued data; zero-row and
+five-row rejection; missing continuation bit; count disagreement; terminal
+unit at the wrong position; nonzero padding; bad CRC; extra trailing bytes.
+Run positive round trips, but do not substitute round trips for golden
+vectors and adversarial independent decodes.
+
+Purity checking includes preprocessed code, object symbols, relocations,
+and imports. A text search for forbidden words alone is insufficient and
+must not reject harmless comments as if they were executable behavior.
+
+G2. BOOT, FIXED MEMORY, AND HARDWARE BOUNDARY
+Record exact CPU/firmware/RAM/device profile and visible boot identity.
+Test fragmented maps, too many descriptors, reserved holes, MMIO overlap,
+unsupported physical address width, integer overflow, and insufficient RAM.
+Repeat with the same normalized map; bindings must follow the declared
+deterministic selection order. Different actual hardware is a new input.
+No mapping may consume another owner's region or exceed a static pool.
+Test firmware handoff retry with a changed memory-map key and reject
+unsupported executable/ABI assumptions before transferring control.
+
+Attempt guest access to private state and result pages; it must fault.
+Attempt Shakti writes to published observation pages; they must fault.
+Verify intended data writers can write their own regions.
+Exercise second-stage permission changes and invalidation, exception
+nesting, bounded stacks, and explicit halt/recovery paths.
+DMA-enabled devices must stay within their tested domains. A hardware test
+or an explicit disabled-device condition is required; CPU tests alone fail
+to establish DMA isolation.
+
+G3. OBSERVATION AND EXECUTION TRACE
+Use an owned test guest with a known counter and named file/function events.
+Match trace identifiers to its exact build manifest. Direct and declared
+evidence stay visibly distinct. No invented function/file attribution.
+Capture LIVE while a counter changes; label it LIVE even if bytes happen
+to look coherent. Capture QUIESCED with vCPU and relevant DMA quiescence;
+verify the declared invariant during the complete capture interval.
+Force missing quiescence and return INCONSISTENT/UNSUPPORTED, not success.
+Hold both snapshot generations; the next publication returns BUSY without
+overwriting either. Test stale leases, slot exhaustion, generation wrap,
+mutated requests after commit, and unknown endpoint/policy bindings.
+Test unsupported encrypted/opaque regions and show the exact visibility
+limit; never substitute guessed contents.
+
+G4. STORAGE, AUDIT, AND RECOVERY
+Use declared disposable test extents, never the user's original data.
+Test both device-sector sizes where claimed, alignment, LBA overflow,
+out-of-extent access, short transfer, queue exhaustion, timeout, and flush
+failure. Each failure has an explicit status and bounded completion path.
+Verify no implicit write access to baseline or audit extents from a guest.
+
+Interrupt after each journal write/flush boundary. Reboot/recover and
+classify committed, incomplete, and corrupt records correctly. Check that
+the original partial bytes remain unchanged and new records use a fresh
+segment. No false durable receipt is acceptable.
+Real power-interruption durability is a separate hardware test using
+disposable data and an explicitly identified device.
+Test wrong sequence, previous hash, payload hash, commit hash, commit CRC,
+record lengths, segment links, and nonzero padding.
+
+Use a reduced-capacity test profile to cross80%,90%,95%, and the final
+reserve boundary. Confirm visible warning thresholds, rejection at the
+normal-write limit, preserved prior records, and no deletion or wrapping.
+The guest must not be silently paused because the log filled.
+Test early RAM-only logging; no such record is called durable before drain.
+Confirm journal activity cannot recursively fill its own queue.
+
+G5. TRIAL COPY INTEGRITY
+Hash the baseline before and after every mutation/failure test; it must
+remain identical. Verify changed blocks read from trial and untouched
+blocks read from baseline. Test overlapping writes, exact-end writes,
+one-byte overrun, index exhaustion, shared-cap exhaustion, stale IDs,
+unknown tests, and fuel exhaustion.
+Interrupt every transaction boundary. Either all mappings for a committed
+request are visible or the transaction is incomplete; never report partial
+mutation as an accepted request. Distinguish CHANGED, authorization, and
+test outcome. A passing copy test is not authority to apply to original.
+
+G6. REAL LEGACY OS
+Identify OS/version, image identity, boot method, virtual devices, memory,
+vCPU profile, host firmware, and source/decoder versions before testing.
+Actually boot, open known files, execute selected workloads, observe named
+changes, and preserve the baseline through restart. Exercise shutdown and
+guest failure. List every unsupported device and visibility gap.
+Passing the small test guest cannot satisfy this gate.
+
+G7. SHAKTI FLOW
+For each completed logical beat, account for1 heart,64 hearing,32 sight
+slots in the declared order. Missing inputs appear as GAP records.
+Late producers and a blocked I/O path must not stop the heartbeat.
+Verify source/epoch/beat/slot/generation before using any packet.
+Text budget is independent and uses its declared scalar-value count;
+malformed UTF-8 fails that text view without changing original bytes.
+Readers retain valid generations across circulation. Reuse occurs only
+after release. Repeated identical recorded input/order gives identical
+native outputs. Do not extend this result to an unrecorded live guest.
+
+G8. SECOND PC AND RELEASE
+Repeat applicable hardware gates on the exact HP model. Record changed
+adapters and unsupported features. Verify the release image and installation
+manifest match their hashes and that installation targets are explicit.
+An ISO/USB container alone is not a compatibility result.
+
+REQUIRED RECEIPT FIELDS
+schema, gate/test ID, evidence level, source/build/profile hashes, toolchain
+identity, hardware/guest identity when relevant, command or entry invoked,
+declared inputs, expected result, actual result, status/exit code, output
+hashes, fault details, and links by local object ID to retained evidence.
+No signature claim without a real implemented signature scheme.
+
+ACCEPTANCE STATES
+NOT_RUN: planned only.
+REVIEWED: inspected source/specification only.
+COMPILED: compilation occurred; execution unproven.
+SOFTWARE_PASS: identified software tests actually ran and passed.
+HARDWARE_PASS: identified tests actually passed on stated hardware.
+FAIL: expected behavior was not observed; retain all failure evidence.
+None of these states implies that every other gate passed.

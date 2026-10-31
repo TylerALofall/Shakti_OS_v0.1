@@ -1,0 +1,366 @@
+SHAKTI OS FOUNDATION v0.1 - EXACT INTERFACE CONTRACTS
+
+This is a specification, not evidence of an implementation run.
+All byte positions below start at zero. Integer fields are unsigned
+little-endian unless explicitly marked signed. Version is 1. Reserved
+bytes are zero on output and must be zero on input. Reject unknown enums,
+rights, flags, channels, services, and versions. No silent normalization.
+
+C01. COMMON API RULES
+
+Pointers must reference valid native objects of the stated capacities.
+These APIs do not make an arbitrary untrusted pointer safe. The bridge
+resolves validated region/offset descriptors before passing native pointers.
+Outputs are valid only under the documented status and publication state.
+On failure, counts/written lengths are zero and no incomplete result is
+published as successful. A fault descriptor may still be returned.
+
+Every wire encoder receives an explicit destination capacity. Check it
+before writing; insufficient capacity returns CAPACITY with no publication.
+Every wire decoder receives an explicit input length. Fixed descriptors
+require the exact specified length: shorter returns TRUNCATED, longer
+returns FORMAT. An array-shaped function parameter alone is not a bounds
+check. Output native structs are published only after complete validation.
+
+Use offset <= capacity and length <= capacity - offset. Do not first add
+untrusted offset and length. Check multiplication before doing it.
+Nonzero-length operations require non-null pointers. Zero-length byte
+operations accept null data pointers and do not dereference them; required
+result/context pointers must still be valid.
+
+sf_bytes_copy has memmove semantics for overlapping valid buffers.
+sf_bytes_clear clears exactly count bytes after a capacity check.
+sf_bytes_equal reports 1 for equal, 0 for different, including equal empty
+spans; it is not advertised as a constant-time cryptographic primitive.
+
+sf_checked_add_u64 and sf_checked_mul_u64 reject overflow without storing
+a wrapped result. Zero output on error. Status integers map exactly to
+sf_base.h. Capacity failures carry resource, request size, and capacity
+and produce a visible BENCH report. They are never partial successes.
+
+SHA-256 streaming contexts are fixed objects owned by the caller. begin
+initializes, update consumes explicit bytes, end finalizes once. Updating
+or ending a finalized context returns STATE. Reject total message lengths
+over floor(UINT64_MAX / 8) bytes. Never buffer an entire disk to hash it.
+
+CRC32C uses reflected polynomial 0x82F63B78, initial state 0xFFFFFFFF and
+final XOR 0xFFFFFFFF. Hardware acceleration must reproduce this complete
+definition, including initialization and finalization.
+
+C02. ENVELOPE83 - 16 BYTES
+
+Offset  Width  Meaning
+0       8      Payload token: low32=slot, high32=slot generation
+8       3      Low17=vector; next2=gate; remaining5=zero
+11      1      Zero
+12      4      CRC32C of bytes 0 through 11
+
+Vector = (channel << 12) | service. Channels 0=local owner, 1=Shakti,
+2=test. Other channels have no v0.1 dispatch authority. Service is 1..12.
+The bit codec can represent a wider vector; dispatch still rejects all
+unassigned values. The actual endpoint determines the sender, not this
+client-supplied field. A confirmed gate field is not authorization.
+
+Format example, before CRC:
+payload 0x0123456789ABCDEF, vector 0x12345, gate 1 produces the first
+twelve bytes EF CD AB 89 67 45 23 01 45 23 03 00.
+That vector has an unassigned dispatch channel and must not be accepted
+as an authorized request merely because its format or CRC is valid.
+
+C03. REQUEST - 128 BYTES
+
+Offset  Width  Meaning
+0       4      ASCII SFR1
+4       2      Version
+6       2      Service
+8       4      Flags; zero in v0.1
+12      4      Capture mode; zero unless OBSERVE
+16      8      Request ID; nonzero and not reused within epoch
+24      8      Object ID
+32      8      Object generation
+40      4      Span region ID
+44      4      Span rights
+48      8      Span offset
+56      8      Span length
+64      8      Span generation
+72      8      Logical tick
+80      8      Fuel; 1..1,000,000
+88      4      Policy ID
+92      4      Service argument; otherwise zero
+96      32     Expected object hash; otherwise all zero
+
+Policies: 1=observe selected, 2=trial selected, 3=training flow,
+4=local diagnostic. The policy must be present in the owner-installed
+immutable policy table and bound to the actual endpoint. A request naming
+policy 4 does not gain local-owner rights.
+
+Policy table schema: policy ID, version, endpoint actor, service mask,
+region/object allow-list, maximum span, allowed capture modes, and profile
+hash. Its maxima are the fixed region/extent/trial capacities. Installation
+must populate exact allowed objects; never default an absent list to all.
+
+Service  Input/operation                       Policy / extra argument
+1        Return profile/capabilities           1 or 4; no object/span
+2        Return public region metadata         1 or 4; argument=region ID
+3        Capture a guest-memory span           1 or 4; live=1, quiesced=2
+4        Read trace batch                      1 or 4; object.id=first seq
+5        Read registered baseline span         1 or 2; object=baseline
+6        Create separate trial descriptor      2; object=baseline
+7        Write trial bytes from published span 2; object=trial
+8        Run named trial test                  2; argument=test ID
+9        Return recorded trial outcome         1 or 2; object=trial
+10       Read audit records                    1 or 4; object.id=first seq
+11       Publish validated flow packet         3; span=96-byte packet
+12       Release result/flow lease             originating policy; object
+
+For services 4 and 10, argument is requested record count, 1..64.
+For service 7, the span identifies the published input object; the trial
+byte offset is supplied as a validated 64-bit prefix in that input object,
+followed by at most 1 MiB of payload. span.length includes this 8-byte
+prefix. No native address is accepted. Write length is span.length - 8.
+The service checks that the target range is within the trial's baseline.
+
+Each handler freezes/copies all client-controlled descriptors before use.
+A lease prevents the referenced input from being changed or recycled while
+consumed. Detect stale generation before access and again at publication.
+
+Fuel units: one per described 4 KiB chunk for capture/baseline/trial I/O;
+one per trace/audit record; one for bounded metadata/release/publish;
+one preemption quantum for trial execution. Trial quantum target is
+1,000,000 ns, implemented and measured through the actual platform timer.
+Preemption does not rely on a guest voluntarily exiting. This bounds a
+run; it is not an instruction-count or deterministic-guest guarantee.
+Every handler also obeys the fixed span, record, and queue caps.
+
+C04. RESPONSE - 128 BYTES
+
+Offset  Width  Meaning
+0       4      ASCII SFS1
+4       2      Version
+6       2      Service echoed
+8       4      Signed status, encoded two's-complement 32-bit value
+12      4      Consistency; zero when inapplicable
+16      8      Request ID echoed
+24      8      Result object ID
+32      8      Result object generation
+40      4      Result span region ID
+44      4      Result span rights; READ only for published observations
+48      8      Result span offset
+56      8      Result span length
+64      8      Result span generation
+72      8      Start sequence
+80      8      End sequence
+88      4      Durability: 0=none, 1=RAM only, 2=committed
+92      4      Detail; zero on success, resource/reason ID on failure
+96      32     Hash of published result bytes; zero when absent
+
+Decode negative status by its mathematical signed value without relying
+on implementation-defined out-of-range unsigned-to-signed conversion.
+No result is considered durable merely because status is zero.
+
+An error may publish a separate 64-byte fault record. Its layout is magic
+FALT at 0, version u16 at 4, zero u16 at 6, signed status at 8, resource
+u32 at 12, requested u64 at 16, capacity u64 at 24, sequence u64 at 32,
+and zero bytes 40..63. This never represents a partially successful action.
+
+C05. SLOT OWNERSHIP AND PUBLICATION
+
+Request slot N corresponds to response slot N, N in 0..63. Control words
+use a separate page with explicitly defined atomic access widths.
+State order: FREE, FILLING, COMMITTED, ACTIVE, COMPLETE, RELEASED, FREE.
+FAULT can follow validation/execution failure; the client must acknowledge
+it before reuse. Reuse increments generation. Generation zero is invalid.
+Refuse the next reuse when increment would wrap UINT32_MAX.
+
+Only the owner can enter FILLING. Publication uses a release barrier;
+the reader uses an acquire barrier and checks generation/state. Copy the
+request privately before execution. Publish response bytes before COMPLETE.
+No volatile-only implementation, shared writable result page, stale token,
+or unbounded spin loop is acceptable. BUSY is an explicit return path.
+
+C06. TRACE - 128 BYTES
+
+Offset  Width  Meaning
+0       4      ASCII STR1
+4       2      Version
+6       2      Kind from SfTraceKind
+8       8      Sequence
+16      8      Logical tick
+24      8      Epoch
+32      32     Build identity
+64      4      Source-file ID
+68      4      Source-function ID
+72      4      Evidence: direct=1, declared=2, derived=3
+76      4      Value kind from SfValueKind
+80      8      Subject object ID
+88      8      Subject offset
+96      8      Subject length
+104     8      Value or its declared bit representation
+112     8      Subject generation
+120     4      CRC32C of bytes 0..119
+124     4      Zero
+
+Source-map IDs refer to the exact build's manifest, not pointers. Zero
+source IDs mean no source attribution is available. Derived labels carry
+a decoder version in their enclosing observation receipt. Missing records
+produce explicit GAP metadata; sequence gaps are never silently hidden.
+Source names live in the fixed source-text table and are length-bounded.
+
+C07. OPTIONAL FOUR-ROW UNIT17 RECORD
+
+Header: byte0=0x83, byte1=1, byte2=row count 1..4, byte3=total chunk count
+1..32, bytes4..7=valid_bits u32 little-endian.
+Each row has 1..8 chunks. A chunk has 16 payload bits, least-significant
+bit first, followed by continuation bit 1 except for the row's last chunk.
+After all declared rows/chunks, append one 17-bit all-zero terminator.
+valid_bits = 64 + 17 * total_chunks + 17.
+Zero-pad to the next byte. Append CRC32C of all those header/payload/padding
+bytes as four little-endian bytes. Total length must be exactly
+ceil(valid_bits / 8) + 4, at most 83 bytes. Extra bytes are rejected.
+
+Counts determine where the terminator must appear. A zero-valued data
+chunk is valid and is not a terminator at an earlier position. Every row
+must terminate consistently with both counts. No instructions are executed
+by this data codec. Failed decode publishes no partially accepted rows.
+
+C08. AUDIT SEGMENT AND COMMITTED RECORD
+
+Segments are fixed 256 MiB extents; a configured log may contain at most
+4096. Segment boundaries are installation-manifest entries, not guessed
+disk offsets. Logical block is 4096 bytes. Device-sector conversion is
+checked and accepts only the qualified 512/4096-byte sector profiles.
+
+First block of a segment: bytes0..7 ASCII SHKSEG01; version u16 at8;
+zero u16 at10; header size u32=4096 at12; segment number u64 at16;
+epoch u64 at24; previous committed record hash at32..63; image hash
+at64..95; profile hash at96..127; previous segment number u64 at128;
+CRC32C of bytes0..135 at136; zeros140..4095. For the first segment,
+previous segment number is UINT64_MAX and previous hash is all zero.
+
+Record consists of one 4096-byte header, zero or more payload blocks,
+and one 4096-byte commit block. Payload is at most 57,344 bytes. Total
+record is 8,192..65,536 bytes, including zero padding of the last payload
+block. A record never crosses a segment boundary. Unused tail stays zero.
+
+Header block:
+  0..7   ASCII SHKLOG01
+  8      Version u16
+  10     Kind u16
+  12     Header length u32 = 4096
+  16     Total record bytes u32
+  20     Exact payload bytes u32
+  24     Sequence u64
+  32     Logical tick u64
+  40     Epoch u64
+  48     Subject ID u64
+  56..87 Previous committed record SHA-256
+  88..119 SHA-256 of exact unpadded payload
+  120    Flags u32; zero for initial format
+  124..4095 zero
+
+Commit block:
+  0..7   ASCII SHKCOM01
+  8      Version u16
+  10     Zero u16
+  12     Total record bytes u32, matching header
+  16     Sequence u64, matching header
+  24..55 SHA-256 of header block and all padded payload blocks
+  56     CRC32C of commit bytes0..55
+  60..4095 zero
+
+Write/flush/read back header and payload. Then write/flush/read back the
+commit block. Only then publish COMMITTED. Failure leaves an incomplete
+extent, never a passing receipt. Hardware flush guarantees must be tested
+for the selected controller and device; RAM-backed tests cannot establish
+power-loss durability.
+
+Recovery validates segments, lengths, sequence, padding, hashes, commit,
+and previous links. At an incomplete or corrupt tail, retain the bytes,
+report the location, and use a fresh segment rooted in the last committed
+hash. Record that recovery decision. Do not overwrite the failed tail.
+At sequence UINT64_MAX, reject further records; never wrap silently.
+
+Initial audit kinds: 1=BOOT, 2=CAPABILITY, 3=OBSERVATION, 4=GAP,
+5=TRIAL_INTENT, 6=TRIAL_RESULT, 7=TEST_RESULT, 8=CAPACITY,
+9=FAULT, 10=RECOVERY, 11=SHUTDOWN, 12=POLICY_IDENTITY.
+Payloads use versioned typed records; raw borrowed pointers are forbidden.
+No full keyboard/password stream is collected by default.
+
+C09. TRIAL TRANSACTIONS
+
+Each request first checks baseline identity, trial generation, exact range,
+index/table capacity, trial extent capacity, and required audit capacity.
+Then durably record intent. Write changed payload to fresh trial blocks,
+flush it, and commit its mapping metadata. Finally commit the result record.
+A recovered intent without a complete transaction is reported INCOMPLETE.
+Never classify missing result evidence as success.
+
+Multi-block requests become visible together through a committed mapping
+transaction; do not expose an early subset as a successful write. All data
+and map entries needed for the bounded request are reserved from existing
+fixed slots before writing. No generic allocation routine is introduced.
+
+An index entry has baseline block u64, trial-data block u64, transaction
+sequence u64, trial-slot u32, and generation u32. Canonical stored index
+entries are explicitly encoded as 32 bytes; native layout is checked
+separately. Index occupancy never exceeds the shared declared total.
+
+An extent cannot be simultaneously baseline-writeable and trial-writeable.
+All public trial changes have a request ID. No apply-to-original API exists.
+Tests run against a named registered test and trial; unknown tests reject.
+
+C10. FLOW PACKET - 96 BYTES
+
+Offset  Width  Meaning
+0       4      ASCII SFP1
+4       2      Version
+6       2      Sensory channel
+8       8      Source ID
+16      8      Epoch
+24      8      Beat
+32      8      Packet generation
+40      4      Slot
+44      4      Valid; exactly 0 or 1
+48      4      Gap reason from SfGapReason
+52      4      Payload region
+56      8      Payload offset
+64      8      Payload length
+72      8      Payload generation
+80      4      Payload rights
+84      4      Zero
+88      4      CRC32C of bytes0..87
+92      4      Zero
+
+Valid=1 requires gap NONE, a valid leased span, and bounded payload length.
+Valid=0 requires a nonzero gap reason and a zero payload span.
+Heart slot range: 0. Hearing: 0..63. Sight: 0..31. Text/context use slot0.
+At micro-slot0 emit heart, hearing0, then sight0. Every micro-slot emits
+its hearing slice; even micro-slots emit sight(slot/2). Missing inputs
+emit explicit gaps in that same order. Do not wait on I/O to advance time.
+
+Text budget is independently set, initially32 and at most128 Unicode
+scalar values per logical beat in an explicitly UTF-8 text view. The text
+producer validates encoding and counts scalar values, not raw bytes or
+grapheme clusters. This view never modifies the original source bytes.
+No word, grapheme, or language-understanding claim is implied by this count.
+The text decoder is a bounded owned C99 component required before using
+the text channel; heartbeat/hearing/sight tests need not depend on it.
+
+Flow slots and payload spans are leased. No reuse while a reader holds a
+generation. Packet count is at most128; a payload is at most16 MiB and must
+fit its assigned backing region with all concurrent payloads accounted for.
+Advancing a beat requires next=previous+1. Overflow rejects the transition.
+
+C11. FAILURE AND DIAGNOSTIC PRECEDENCE
+
+For wire input check in this order: available length, magic/version,
+reserved bits, checksum, syntactic field ranges, endpoint/policy binding,
+object/generation, arithmetic/bounds, resource capacity, execution.
+For optional records, verify bounded header counts before computing any
+derived length or checksum range. Unknown enums return FORMAT; unknown
+version returns VERSION; missing bytes return TRUNCATED; bad zero padding
+returns PADDING; unauthorized endpoint/rights return RIGHTS or POLICY.
+
+All collection interfaces return a next sequence or explicit terminal
+status. No caller is expected to guess whether a zero count means EOF,
+temporary absence, capacity exhaustion, or a failure.

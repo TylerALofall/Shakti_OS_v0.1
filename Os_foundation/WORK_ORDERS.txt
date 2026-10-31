@@ -1,0 +1,427 @@
+SHAKTI OS FOUNDATION - AGENT WORK ORDERS v0.1
+2026-10-31
+
+PURPOSE
+Tyler requested a quick check and immediate instructions after the footing
+package. These work orders are that next step. They do not claim the OS
+exists or that unrun code has passed. The original blueprint remains the
+design baseline; this handoff advances its delivery stage to work orders.
+
+REQUIRED READABLE REPOSITORY INPUTS
+Read mcp/os_foundation/CONSTITUTION.md, BLUEPRINT.txt, CONTRACTS.txt,
+ACCEPTANCE.txt, the fixed profile, and the eight C99 interface headers.
+These files are the extracted v0.1 baseline. No ZIP access is required.
+Use this baseline, not an earlier workbook or a remembered ten-pod design.
+The target is Tyler's new dedicated OS repository. Its root README.md and
+AGENTS.md define the integration branch and ownership for this handoff.
+
+QUICK CHECK COMPLETED
+The original Constitution copy matched byte-for-byte. All 15 listed content
+hashes verified. The 16-entry archive passed its compressed-data integrity
+check. The standalone blueprint matched the packaged blueprint.
+The wire declarations have explicit input lengths and output capacities.
+The profile declares fixed CPU/context/baseline caps and a 2 GiB flow arena.
+These are packaging/interface checks. No C implementation was compiled,
+no machine booted, and no hardware or guest compatibility was validated.
+
+STARTING ASSIGNMENTS FOR PARALLEL SOURCE WORK
+Agent A: W01, toolchain qualification.
+Agent B: W02, checked arithmetic and byte primitives.
+Agent C: W03, CRC32C.
+Agent D: W04, SHA-256.
+Agent E: W05, envelope/request/response encoding.
+Agent F: W07, fixed profile and region descriptors.
+An additional agent can take W06 trace encoding or W08 flow encoding.
+Use one owner per listed output file. I have not launched these agents.
+
+Source authoring of independent modules can begin immediately. A dependent
+test or acceptance claim waits for its actual inputs and qualified tools.
+Do not write stubs returning success to make another job appear buildable.
+Do not delay every source task because the compiler executable is not yet
+selected; do not weaken any requirement to get a compiler result either.
+
+COMMON INSTRUCTIONS - SEND WITH EVERY ASSIGNMENT
+
+1. Read CONSTITUTION.md, README.txt, your relevant blueprint/contracts
+   sections, sf_base.h, sf_config.h, and your interface header before editing.
+   Read your visible job state again after any context reset.
+2. Work only in the assigned paths under mcp/os_foundation. Integrate with
+   the new dedicated OS repository on an isolated review branch. Do not push
+   main, change credentials, alter unrelated files, or delete/overwrite logs.
+   If this is a standalone handoff, report that repo integration is pending.
+3. Strict C99 portable logic; zero general heap; bounded static storage;
+   no recursion, VLA, alloca, Python, Node, GCC, remote hooks, downloaded
+   scripts, hidden libraries, dynamic loading, or spawned build processes.
+   The explicitly listed architecture jobs own all CPU-specific assembly.
+4. All function arguments, error conditions, byte order, capacities,
+   generations, and mutation rules follow the existing contracts. Do not
+   silently change shared headers or invent a different protocol.
+5. Inspect each source before using or distributing it. Run one reviewed
+   build/test command, inspect its result, then decide the next command.
+   Do not combine source construction and execution in one blind step.
+6. Implement tests that can expose wrong behavior. Keep expected results
+   independent of the implementation under test. Host simulation is labeled
+   simulation; an owned test guest is labeled a test guest.
+7. Preserve every failed run and its exact result. A compiler success is
+   not an execution result. NOT_RUN remains NOT_RUN until execution occurs.
+   Never label a checksum as a signature or a live sample as frozen state.
+8. Missing input blocks only the dependent work. Record its name and effect;
+   finish independent work. No automatic substitution of another compiler,
+   guest OS, driver, library, model, tool, or memory policy.
+9. Use Tyler's actual assembly README tool for tools that require integration.
+   It was not provided in this handoff. Find/read it in the authorized repo;
+   do not replace it with a newly invented generator. Tool source reads use
+   fgetc on actual files through a disclosed approved I/O adapter.
+10. End with: changed files; implemented behavior; exact tests run/results;
+    failures/NOT_RUN items; resource/stack bounds; dependency evidence;
+    and the next work order now unblocked. No vague 'all done' receipt.
+
+TEST ENTRY RULE
+Each module test exports a uniquely named test function and has no main.
+Only the integrator-owned tests/validator_runner.c supplies the selected
+test target's entry point. Firmware entry and guest entry belong to their
+separate explicit targets. Never compile every source into one target or
+introduce duplicate main definitions. Any hosted test I/O adapter must be
+disclosed and qualified; it is not silently linked into the native image.
+
+JOB STATE AND RECEIPTS
+Use visible text files under review/Wxx/ for each job. Preserve distinct
+run IDs; never reuse a previous run's log filename. State must name the
+current source revision, constraints, last inspected output, next action,
+and actual blocker. Do not write private hidden state that affects code.
+Keep raw evidence in the same job container as its summary and source
+identity. Completed tools and their README/examples remain together.
+
+W00 - INTEGRATION OWNERSHIP AND CONTRACT FREEZE
+Owner: one integrator, not every worker.
+Inputs: the full handoff and blueprint.
+Outputs: review/W00/STATE.txt and review/W00/ASSIGNMENTS.txt.
+Do: record actual repository/branch, file owners, package hashes, profile
+identity, and the work-order dependency graph. Reserve the shared headers
+to the integrator. Record concrete necessary adapter/layout additions before
+their dependent implementation starts. Resolve collisions from evidence.
+Accept: every active job has one owner and exact paths; no covert changes to
+shared contracts; all unresolved hardware/tool/guest inputs are visible.
+Do not use this administrative job to claim G0 toolchain acceptance.
+
+W01 - QUALIFY THE NON-GCC BUILD TOOLCHAIN
+Inputs: BLUEPRINT10 and ACCEPTANCE G0.
+Outputs: review/W01/TOOLCHAIN.txt, source/provenance inventory, qualification
+fixtures, exact separately invoked commands, and retained execution logs.
+Do: inspect the candidate compiler, assembler, linker, bootstrap, headers,
+runtime helpers, imports, and allocation behavior. Qualify strict C99,
+x86-64 ABI, large static reservations, boot/foundation formats, diagnostics,
+inspectable machine code, stack evidence, and repeatable declared builds.
+Accept: actual successful qualification against the strict requirements.
+Failure: name the precise missing capability. A smaller compiler that uses
+a heap does not qualify as a zero-heap toolchain. No GCC fallback or hidden
+bootstrap exception. Compiler implementation, if needed, is a separately
+scoped project rather than an unexplained extra inside this OS job.
+Unblocks: execution-based acceptance of all native source jobs.
+
+W02 - CHECKED ARITHMETIC AND BYTE OPERATIONS
+Own: core/bytes.c and tests/test_bytes.c.
+Interface: sf_base.h arithmetic/copy/clear/equal declarations.
+Do: complete range checks before access; reject overflow without wrapped
+results; implement the specified null/zero and overlapping-copy behavior.
+No arbitrary pointer validation claim. Work on valid supplied objects.
+Accept: ACCEPTANCE G1 arithmetic/span/byte cases, exact-end boundaries,
+both overlap directions, unchanged guard bytes, and independent expected
+results. Record fixed storage and maximum call-chain stack use.
+Dependencies: shared contract only for source; W01 for execution acceptance.
+
+W03 - CRC32C PRIMITIVE
+Own: core/crc32c.c and tests/test_crc32c.c.
+Interface: sf_crc32c in sf_base.h.
+Do: implement the exact reflected polynomial, initial state, and final XOR.
+Start with the owned C99 implementation. No hardware intrinsic dependency
+or imported lookup table with unexplained provenance.
+Accept: empty and 123456789 known answers; independent varied buffers,
+length boundaries, and software/hardware agreement if an accelerated
+adapter is subsequently added. CRC is not authorization or a signature.
+Dependencies: W01 for executed acceptance.
+
+W04 - SHA-256 ONE-SHOT AND STREAMING
+Own: core/sha256.c and tests/test_sha256.c.
+Interface: SfSha256 and all sf_sha256 functions.
+Do: implement the published algorithm using owned bounded C99 code and a
+fixed caller-owned context. Check byte-count overflow before bit conversion.
+Do not buffer the whole object or use another library behind an adapter.
+Accept: published empty/abc and multi-block known answers; every useful
+chunk split; finalized-context rejection; input-length limit; no padding
+or endianness dependence; guard bytes unchanged.
+Dependencies: W01; W02 if its helpers are used.
+
+W05 - ENVELOPE, REQUEST, AND RESPONSE WIRE FORMATS
+Own: core/wire.c and tests/test_wire.c.
+Interface: sf_protocol.h envelope/request/response encode/decode only.
+Do: implement CONTRACTS C02-C04 with explicit byte operations. Validate
+capacity/length before access. Native struct layout never becomes wire
+layout. Keep format decoding separate from dispatch authority.
+Accept: independently reviewed complete golden vectors; truncated and
+extra bytes; reserved/padding bits; negative status encoding; valid CRC
+with an unassigned channel; all enum/field limits. No partial publication.
+Dependencies: W02 and W03; W01 for executed acceptance.
+
+W06 - TRACE WIRE FORMAT AND SOURCE ID TABLE
+Own: observe/trace_wire.c, observe/source_map.c, tests/test_trace_wire.c.
+Interface: sf_trace_encode/decode and source-map capacities.
+Do: implement CONTRACTS C06. Use stable build/file/function IDs and bounded
+name storage. Keep direct, declared, and derived evidence distinguishable.
+Zero source IDs mean attribution unavailable, never guessed attribution.
+Accept: golden 128-byte records, invalid IDs/lengths/enums, CRC and padding
+faults, source-table exhaustion, and exact build identity matching.
+Dependencies: W02/W03; W04 for content identities when required.
+
+W07 - FIXED PROFILE AND REGION/VIEW DESCRIPTORS
+Own: spec/profile.c and tests/test_profile.c.
+Interface: sf_config.h and sf_memory.h descriptor types.
+Do: express every declared budget as fixed owner regions and explicit
+views. Overlap references the same backing bytes. Check sums, intervals,
+rights, page boundaries, generations, and single-writer ownership.
+Do not implement a generic allocator or bind actual physical pages here.
+Accept: exact 11,008 MiB total, 2 GiB flow layout, no reserve secretly used,
+rejected out-of-range/overflow/overlap-rights fixtures, and complete IDs.
+Dependencies: W02 for checked arithmetic; W01 for executed acceptance.
+
+W08 - FLOW PACKET CODEC
+Own: flow/packet_wire.c and tests/test_flow_packet.c.
+Interface: sf_flow_encode/decode; CONTRACTS C10.
+Do: encode/decode 96-byte packets, fixed slot ranges, gap validity, payload
+rights, and generations. This job does not implement the learning loop.
+Accept: independent vectors for every channel and gap; malformed lengths,
+CRC/padding, nonzero gap with valid payload, wrong slot, and stale IDs.
+Dependencies: W02/W03; executed acceptance through W01.
+
+W09 - OPTIONAL UNIT17 DATA CODEC
+Own: codec/unit17.c and tests/test_unit17.c.
+Interface: sf_rows17_encode/decode; CONTRACTS C07.
+Do: implement exact row/chunk counts, continuation, final terminator,
+inert padding, and CRC. A zero data chunk is valid within declared counts.
+Accept: all G1 Unit17 cases and independent vectors. No native-instruction
+translation or guest execution claim. This codec does not block the first
+hardware telescope unless an actual selected interface requires it.
+Dependencies: W02/W03 and W01 for executed acceptance.
+
+W10 - VISIBLE UEFI DISCOVERY, BEFORE HANDOFF
+Own: boot/uefi_entry.c and the selected UEFI ABI declarations.
+Inputs: qualified PE/COFF/ABI output and sf_platform.h.
+Do: display identity, read bounded platform/memory/display information,
+record capabilities, and reject unsupported conditions. Initially remain
+in a clearly identified discovery test; do not claim a running kernel.
+Accept: actual boot on the identified 2023 XPS, bounded table handling,
+correct framebuffer stride/format, and insufficient/unsupported-capability
+reports. No disk formatting, original-system writes, or network access.
+Dependencies: W01, W02, W07; exact ABI additions frozen by W00 first.
+
+W11 - FOUNDATION IMAGE LOADER AND FIRMWARE HANDOFF
+Own: boot/image_loader.c and tests/test_image_loader.c.
+Do: use the pinned foundation image format and declared fixed reservations.
+Validate sections/segments, lengths, relocations, permissions, overlap,
+alignment, and image hash before transfer. Copy only validated platform
+data. Handle GetMemoryMap/ExitBootServices key changes explicitly.
+Accept: malformed-image rejection and an actual controlled handoff that
+reports its entry state. Firmware services are not used after termination.
+Dependencies: W01-W04, W07, W10; exact image layout frozen before coding.
+
+W12 - X86-64 ENTRY, EXCEPTIONS, HOST MAPPINGS
+Own: arch/x86_64/entry.S, exceptions.S, paging.c, and their tests.
+Do: implement only the documented CPU boundary and host mappings first.
+Reserve all stacks, set guards, establish descriptors/exception paths,
+isolate code/data, and bound nesting. No assembly hidden in portable files.
+Accept: actual expected protection faults, stack-bound evidence, excluded
+reserved/MMIO ranges, and correct failure diagnostics. A crash alone is
+not proof of the intended fault or clean recovery.
+Dependencies: W10/W11, W07, applicable CPU documentation and W01.
+
+W13 - VMX/EPT AND AN OWNED TEST GUEST
+Own: arch/x86_64/vmx_entry.S, vmx.c, guest/test_guest.c, test evidence.
+Do: start one explicit test vCPU with no passthrough devices. Own its
+second-stage mappings and intercept the required events. Enforce actual
+preemption. Keep every VM entry/exit register and error state traceable.
+Accept: the known guest runs, exits as expected, cannot access private
+pages, and remains bounded when it does not cooperate. Record CPU results.
+Dependencies: W12 and qualified VMX/EPT capability. This does not satisfy
+real legacy OS boot or DMA isolation.
+
+W14 - DEVICE ENUMERATION AND DMA BOUNDARY
+Own: arch/x86_64/dma.c and selected device enumeration code/tests.
+Do: identify actual DMA-capable devices. Keep unqualified bus mastering
+disabled. Build fixed IOMMU tables for explicitly owned device buffers;
+include interrupt remapping/invalidation where required. No passthrough.
+Accept: actual device/domain isolation evidence or a precise disabled-
+device result. Do not substitute CPU-page tests for DMA testing.
+Dependencies: W10/W12; exact chipset/device inputs. Storage/device enable
+waits for the applicable DMA boundary, not merely this file's compilation.
+
+W15 - VIEW LEASES, SLOT PUBLICATION, SERVICE DISPATCH
+Own: memory/views.c, bridge/service.c, tests/test_views.c, test_service.c.
+Do: implement fixed generation/ownership state machines and CONTRACTS C05.
+Bind sender to endpoint; copy requests privately; validate referenced data
+leases. Use actual release/acquire/atomic adapters, not volatile alone.
+Accept: stale/replayed tokens, post-commit mutation, bogus CONFIRMED gates,
+unknown policies, BUSY, generation exhaustion, and one-way result rights.
+Dependencies: W05/W07 and qualified architecture synchronization adapters.
+Shared headers remain with W00; no duplicate alternate status vocabulary.
+
+W16 - LIVE AND QUIESCED TELESCOPE CAPTURE
+Own: observe/capture.c and tests/test_capture.c.
+Interface: sf_observe_capture/release.
+Do: implement the two fixed snapshot buffers and capture consistency labels.
+Freeze only the declared scope; account for relevant vCPUs and DMA. Large
+batches do not magically become one coherent whole-system snapshot.
+Accept: known changing counter LIVE test, truly quiesced capture, missing
+quiescence rejection, both buffers leased, stale release, and capacity.
+Dependencies: W13-W15, W04 for hashes. No write-through observation alias.
+
+W17 - TRACE COLLECTION AND KNOWN TRAINING STEPS
+Own: observe/trace.c and explicit instrumentation in the owned test guest.
+Do: collect entry/exit/stage/read/write events in the fixed trace region.
+Every hook is listed in the build manifest; no invisible compiler injection.
+Compare known declared events with actual observed changes where possible.
+Accept: exact sequence/source IDs, ring exhaustion without silent loss,
+explicit GAP reports, and independent/direct versus declared labels.
+Dependencies: W06/W13/W15; W16 for correlated observations.
+
+W18 - NATIVE SHAKTI EXECUTION BOUNDARY
+Own: native/schedule.c and arch/x86_64/native_entry.S.
+Do: implement fixed native contexts and a small documented ring-3 service
+entry/return ABI, frozen through W00 before implementation. Connect only
+the existing validated service interface. Bound all stacks and runnable
+contexts; do not add a process launcher, dynamic loader, or remote shell.
+Accept: a native test client can request/read an observation and cannot
+write private/result pages or execute privileged I/O directly.
+Dependencies: W12/W15/W16. Do not claim Shakti's learning engine is built.
+
+W19 - ONE REAL STORAGE CONTROLLER AND BLOCK LAYER
+Own: storage/controller.c, storage/block.c, tests/test_block.c.
+Do: choose the actual first-board controller from evidence: NVMe or AHCI,
+not both under one unfinished abstraction. Use fixed queues/DMA buffers,
+bounded deadlines, explicit sector conversion, and manifest-bound extents.
+Accept: actual read/write/flush on a named disposable extent, sector and
+LBA rejection, timeout, short-transfer/queue failures, no out-of-extent I/O.
+Dependencies: W14, W02, exact device input, and explicit test extent.
+Never select the user's original disk data as an assumed disposable area.
+
+W20 - AUDIT FRAMING AND EXTENT LAYOUT
+Own: storage/extent.c, storage/audit_wire.c, tests/test_audit_wire.c.
+Do: implement CONTRACTS C08 segment/header/commit layouts, lengths, padding,
+hash links, and bounded extents. Validate all arithmetic before access.
+Accept: independently checked records and every length/hash/padding/link
+failure. A RAM-backed device can establish framing only, not durability.
+Dependencies: W02-W04; W19 only for actual device execution.
+
+W21 - DURABLE JOURNAL, RECOVERY, AND CAPACITY WARNINGS
+Own: storage/journal.c and tests/test_journal.c.
+Do: ordered data/flush/readback and commit/flush/readback; preserve every
+incomplete tail and begin a fresh segment. Drain early RAM-only records
+honestly. Avoid recursive logging. Implement 80/90/95% warnings and reserve.
+Accept: interruption at each boundary, actual restart recovery, full-extent
+behavior, no pruning/wrap/deletion, and no false durable receipt. Identify
+which tests are simulated and which actually ran on hardware.
+Dependencies: W19/W20. Physical interruption uses only approved test data.
+
+W22 - BASELINE PLUS SEPARATE TRIAL BLOCKS
+Own: storage/trial.c and tests/test_trial.c.
+Do: implement sf_baseline_register, sf_trial_begin/read/write with fixed
+indices and append-only changed blocks. Validate all capacity before
+mutation; commit multi-block mapping changes as one accepted transaction.
+Accept: baseline hashes unchanged, correct fallback reads, interrupted
+transactions, index/full-disk exhaustion, stale object IDs, and no public
+apply-to-original path. Writes do not implicitly mean authorized changes.
+Dependencies: W19-W21 and W04. Four active descriptors share one fixed
+changed-block index; do not allocate the maximum again for every trial.
+
+W23 - TRIAL TEST RUNNER AND FACTUAL COMPARISON
+Own: trial/test_registry.c, trial/compare.c, tests/test_compare.c.
+Do: use a fixed registry of named tests and bounded execution. Report
+CHANGED, authorization, and test outcome separately with evidence IDs.
+Implement sf_trial_run/result through the defined guest/native adapter.
+Accept: PASS/FAIL/NOT_TESTED remain distinct; unknown tests and fuel expiry
+reject; no successful result without a corresponding executed test record.
+Dependencies: W22, W13/W18 as applicable, W21. No model judges acceptance.
+
+W24 - SENSORY SCHEDULE AND CIRCULATION VIEWS
+Own: flow/schedule.c, flow/views.c, tests/test_flow.c.
+Do: connect the fixed arena views, packet leases, beat advance, and explicit
+gaps. Enforce 1 heart, 64 hearing, 32 sight positions in the specified order.
+No full-RAM cycling, ten pods, automatic extra arenas, or blocked heartbeat.
+Accept: delayed/missing input, occupied buffers, generation lifetime,
+overflow, overlapping views, and byte-identical native replay from the
+same recorded input/order. This does not make an arbitrary guest deterministic.
+Dependencies: W07/W08/W15/W21; source can be authored earlier.
+
+W25 - BOUNDED UTF-8 TEXT VIEW
+Own: flow/text_utf8.c and tests/test_text_utf8.c.
+Do: count Unicode scalar values in the explicitly selected UTF-8 view.
+Reject malformed, overlong, truncated, surrogate, or out-of-range sequences.
+Honor the separate text budget. Preserve all original input bytes; no
+silent stripping or 256-symbol flattening. Rendering is outside this job.
+Accept: independently defined valid/malformed vectors, chunk boundaries,
+exact budget boundaries, and unchanged originals.
+Dependencies: W02; W24 only for integration. Non-text sensory proof can
+proceed without waiting for text decoding.
+
+W26 - SELECTED LEGACY OS COMPATIBILITY CONTRACT
+Own: review/W26/GUEST_PROFILE.txt and guest/legacy_profile declarations.
+Do: identify the real OS/version and image, boot protocol or guest firmware,
+required virtual devices, vCPU/RAM needs, display/input, and observable
+semantics. This missing OS input blocks compatibility, not earlier work.
+Accept: an exact implementable list with dependencies and tests, not a
+promise that arbitrary Windows/Linux/macOS images already boot.
+No opaque firmware blob, external runtime, or guessed OS may be inserted.
+Dependencies: actual guest identity; W00 owns any shared contract additions.
+
+W27 - LEGACY DEVICE/BOOT IMPLEMENTATION, ONE SLICE PER AGENT
+Dispatch this order separately for each W26-defined slice. Give each agent
+one exact file and device/boot function, not the entire guest platform.
+Examples after selection: virtual block queue; interrupt controller;
+virtual timer; guest boot adapter; framebuffer; local input adapter.
+Do: implement only the selected documented interface with fixed storage.
+Accept: per-device rejection/positive tests, then an actual integrated guest
+boot and known-file workload under ACCEPTANCE G6. A test guest is not G6.
+Dependencies: W26 and each slice's real prerequisites, including W14/W19
+for actual I/O. Local input after handoff requires an owned hardware driver.
+
+W28 - LEGACY FILE/FUNCTION INTERPRETATION
+Own: observe/guest_decode.c and tests/test_guest_decode.c.
+Do: interpret only the exact W26 OS/build and declared file formats. Bind
+symbols/layouts to their version and source identity. Preserve raw direct
+evidence beside derived interpretations. Reject unsupported/mismatched
+versions, unavailable keys, and inconsistent snapshots explicitly.
+Accept: known file/process/function fixtures and actual selected-guest
+observations with independently checked mappings. No inference presented
+as machine fact. Do not guess encrypted or unavailable contents.
+Dependencies: W16/W17/W26 and the selected decoder inputs.
+
+W29 - SECOND MACHINE AND REPRODUCIBLE RELEASE PACKAGE
+Own: identified HP adapter changes, tools/image_pack.c, release manifest,
+plain-English README, examples, and final acceptance evidence.
+Do: repeat relevant tests on the exact HP hardware. Build the declared USB
+image through a standalone owned C packaging tool that never spawns the
+compiler. Refuse existing output/temp names; validate before publication.
+Use the actual assembly README tool for integration. ISO packaging is a
+separate tested option, not a substitute for device compatibility.
+Accept: complete hashes/layout, explicit installation target, successful
+boots on stated machines, all applicable evidence, and listed limitations.
+Dependencies: completed first-machine gates, W01, actual HP identity, and
+existing assembly tool. Do not issue a destructive installer automatically.
+
+DEPENDENCY SUMMARY
+W00 tracks all shared decisions without becoming a code bottleneck.
+W01 is required for valid execution-based build acceptance.
+Independent core source: W02,W03,W04,W05,W06,W07,W08; W09 is optional.
+Hardware foothold: W10 -> W11 -> W12 -> W13; W14 before enabling DMA.
+Observation: W15 -> W16/W17 -> W18.
+Persistence: W19 -> W20 -> W21 -> W22 -> W23.
+Training interface: W24 with W25 for text.
+Real guest: W26 -> separate W27 slices -> W28 -> G6 acceptance.
+Second board/release: W29 after applicable gates actually pass.
+
+TIME-CRUNCH HANDOFF RULE
+Assign the independent jobs now. Keep their files separate. Merge only
+after source review and the required evidence. If the toolchain or hardware
+is unavailable, deliver complete reviewed source and tests with NOT_RUN
+marked honestly; never spend credits generating fake pass reports or
+duplicating somebody else's shared module. Preserve the work so the next
+agent can continue from exact inputs and an exact stopped point.

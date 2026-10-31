@@ -1,0 +1,149 @@
+SHAKTI OS FOUNDATION - REPOSITORY SETUP AND DISPATCH
+
+Yes: each worker receives the repository, the common instructions, and one
+work-order number. W01-W08 can begin their assigned source work. Acceptance
+of dependent tests waits for the actual upstream modules and toolchain.
+
+1. INITIAL REPOSITORY
+
+Create the new repository under the account Tyler intends to use. This
+handoff does not require a public repository; choose visibility deliberately.
+Do not add an assumed license, starter application, automatic workflow,
+dependency installer, or unrelated template.
+
+If repository creation needs an initial commit, Tyler can initialize it with
+a README. Create foundation/integration from that starting commit. Put the
+readable project seed on foundation/integration. Agents need access to that
+branch, not to an archive attachment.
+
+The name of the repository does not change any internal project path.
+
+2. INITIAL FILE MAP
+
+Root README.md:
+  Project entry, reading order, branch policy, and actual build status.
+Root AGENTS.md:
+  Visible agent instructions, ownership, evidence, and handoff requirements.
+
+All remaining files are under mcp/os_foundation/:
+  CONSTITUTION.md       unchanged original supplied rules
+  BLUEPRINT.txt         architecture and implementation map
+  CONTRACTS.txt         exact formats and ownership contracts
+  ACCEPTANCE.txt        required tests; not passing test receipts
+  WORK_ORDERS.txt       authoritative W00-W29 assignment text
+  REFERENCE_NOTES.txt   named reference material; no runtime links
+  REVIEW_STATUS.txt     previous package-review scope and limitations
+  README.txt           original package reading guide
+  SHA256SUMS.txt        original package content hashes
+  include/sf_base.h
+  include/sf_config.h
+  include/sf_memory.h
+  include/sf_protocol.h
+  include/sf_observer.h
+  include/sf_storage.h
+  include/sf_platform.h
+  include/sf_flow.h
+
+WORK_ORDERS.txt is the readable work-order document, renamed to this exact
+repository path. No agent needs to open a ZIP. SHA256SUMS.txt covers the
+original package files, not these new root navigation files or work orders.
+Do not treat that limited manifest as covering later code changes.
+
+3. DIRECTORIES CREATED WHEN REAL CONTENT EXISTS
+
+mcp/os_foundation/spec/              W07 profile descriptors
+mcp/os_foundation/core/              W02-W05 primitives and wire format
+mcp/os_foundation/codec/             W09 optional Unit17 codec
+mcp/os_foundation/boot/              W10-W11 loader and handoff
+mcp/os_foundation/arch/x86_64/       CPU-specific implementation
+mcp/os_foundation/memory/            fixed views and ownership
+mcp/os_foundation/native/            fixed native contexts
+mcp/os_foundation/observe/           traces, telescope, interpretation
+mcp/os_foundation/storage/           block layer, journal, trial copies
+mcp/os_foundation/trial/             named tests and comparison
+mcp/os_foundation/guest/             test guest and selected legacy guest
+mcp/os_foundation/devices/           selected local input/device adapters
+mcp/os_foundation/bridge/            validated service dispatch
+mcp/os_foundation/flow/              sensory and circulation interfaces
+mcp/os_foundation/console/           local visible status/fault display
+mcp/os_foundation/tools/             separately reviewed owned tools
+mcp/os_foundation/tests/             module tests and single test runner
+mcp/os_foundation/review/W00/        integration state and assignments
+mcp/os_foundation/review/W01/        toolchain qualification evidence
+mcp/os_foundation/review/Wxx/        each job's state and retained run records
+
+Do not fill the repository with empty source files, placeholder mains,
+dummy success functions, or files whose only purpose is making directories
+look populated. Git records real files; workers create directories with
+their first useful file.
+
+4. BRANCH AND MERGE FLOW
+
+main: explicitly approved releases only after bootstrap setup.
+foundation/integration: readable baseline and reviewed ongoing work.
+work/W00: integration-owned contract/setup changes when needed.
+work/W01 through work/W29: one current branch per assigned job.
+
+Each worker starts from the current foundation/integration SHA. Every pull
+request targets foundation/integration. W00 checks file ownership, the
+actual diff, interface compatibility, and evidence before merging.
+
+Reviewed source can merge with an explicit NOT_RUN status so later workers
+can inspect it. A merge does not make the job validated. Do not advance a
+software/hardware acceptance gate until its actual tests pass.
+
+W00 reads the latest target branch before each merge and checks for changes
+since review. If the target changed, inspect the combined result and rerun
+checks affected by the change. No automatic blanket merge on arrival.
+
+Later workers update to the reviewed integration commit before beginning a
+dependent job and record its SHA. Existing workers protect their local work
+before updating; they do not reset or overwrite a working branch blindly.
+
+Do not make one shared branch writable by every active agent. Do not let
+each worker independently rewrite the common headers or test runner.
+
+5. FIRST ASSIGNMENTS
+
+W00: one integrator owns assignments, shared contracts, and merges.
+Tyler can act as W00; this does not require another paid agent.
+W01: non-GCC toolchain qualification.
+W02: arithmetic and byte operations.
+W03: CRC32C.
+W04: SHA-256.
+W05: envelope/request/response encoding.
+W06: trace encoding and source IDs.
+W07: fixed profile and region descriptors.
+W08: flow packet encoding.
+
+W05/W06/W08 can author source before W02/W03 finish, using the published
+interfaces. Their executed tests wait for the real required modules.
+W01 toolchain qualification controls valid build acceptance. No worker
+substitutes GCC or relaxes the no-heap rule to get around that dependency.
+
+6. COPY THIS KICKOFF TO EACH WORKER
+
+You are assigned WORK_ORDER_ID in this repository.
+Start from the current foundation/integration branch and record its SHA.
+Read AGENTS.md, README.md, mcp/os_foundation/CONSTITUTION.md, the common
+instructions and your work order in mcp/os_foundation/WORK_ORDERS.txt,
+the relevant contracts, and your interface headers before editing.
+Create your own work/WORK_ORDER_ID branch. Own only the files assigned
+to your order and your review/WORK_ORDER_ID evidence directory.
+Deliver complete reviewed source and meaningful tests. Keep unrun tests
+marked NOT_RUN. Open a pull request into foundation/integration containing
+your changes, actual test evidence, dependency SHAs, and remaining blockers.
+Coordinate shared-header or merge changes through W00. Never push main.
+
+Replace WORK_ORDER_ID with W01, W02, and so on. There is no extra numbering
+scheme; W1 means W01 in this project.
+
+7. W00'S RETURN TO TYLER
+
+Report each assigned owner, branch, base/head SHA, changed files, review
+state, test state, blockers, and merge decision. Keep 'merged source' and
+'accepted implementation' as different fields. Say exactly which next jobs
+can now run. Preserve all failures and past run evidence.
+
+No existing repository was changed while preparing this setup. The exact
+new repository URL is still an input for any direct repository operation.

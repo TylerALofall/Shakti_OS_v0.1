@@ -1,0 +1,36 @@
+REFERENCE NOTES - NO RUNTIME DEPENDENCIES
+
+The technical references inform the design; they are not bundled libraries
+or instructions to fetch code during a build.
+
+1. User-supplied Pasted text(4).txt, 405 lines in the supplied attachment:
+   reviewed as the starting workbook, not as a validated implementation.
+   Its final PDF object-order section is incomplete.
+2. User-supplied CONSTITUTION.md, preserved unchanged in this package.
+3. User-supplied SHAKTI sensory convergence and context loop(2).png:
+   heartbeat/sound/sight timing, transient sensory flow, context circulation.
+4. User-supplied Gemini_Generated_Image_lzl4nclzl4nclzl4(2).jpg:
+   memory/knowledge/focus overlap and nine functional state categories.
+5. Tyler's clarifications in this conversation through 2026-10-31:
+   observational telescope, safe working copies, 2023 Dell target, HP next,
+   no remote controls, no GCC, strict native code, and flexible arena size.
+6. Intel 64 and IA-32 Architectures Software Developer's Manual, Volume 3C,
+   order 326019-078US, December 2022, inspected for VMX/VMCS behavior.
+   Actual implementation must use the applicable CPU's current manuals and
+   errata, identified in its hardware profile.
+7. UEFI Specification 2.10, Boot Services:
+   memory-map ownership, fixed reservations, and ExitBootServices handoff.
+8. Tiny C Compiler Reference Documentation 0.9.27:
+   inspected only as a toolchain candidate's published capability statement.
+   No compiler selection, source audit, or qualification resulted.
+
+Implementation references to acquire and pin during qualification:
+  applicable Intel VMX, VT-d, interrupt, and memory-ordering specifications;
+  selected storage controller's NVMe or AHCI specification and device data;
+  UEFI executable/ABI and boot-device requirements;
+  ISO/IEC 9899:1999 language rules;
+  FIPS 180-4 SHA-256 definition and published known-answer vectors;
+  selected legacy OS's documented boot/device interface.
+
+No source attribution here claims that vendor hardware is fully auditable,
+that an imported OS is heap-free, or that any specification was implemented.
