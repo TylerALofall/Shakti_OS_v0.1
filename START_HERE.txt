@@ -1,0 +1,55 @@
+SHAKTI OS - COMPLETE HANDOFF v0.1
+
+This package gathers the 24 files from this OS foundation handoff and adds
+this guide. Existing file contents have been preserved.
+
+1. YOUR REPOSITORY FILES
+
+Open the repository directory inside this package. Its contents are already
+arranged for the new repository:
+
+  README.md
+  AGENTS.md
+  mcp/os_foundation/          blueprint, contracts, work orders and records
+  mcp/os_foundation/include/  all eight C interface headers
+
+Put the CONTENTS of repository/ at the root of your new repository on
+foundation/integration. Do not put a second repository/ wrapper inside it.
+
+Start with README.md. The detailed setup instructions are in
+mcp/os_foundation/REPOSITORY_SETUP.txt. Assign each worker one W-number from
+mcp/os_foundation/WORK_ORDERS.txt. W00 coordinates ownership and reviews
+pull requests; Tyler can be W00. Workers use work/W01, work/W02 and so on,
+with pull requests targeting foundation/integration. Later workers begin
+from the updated integration commit. Workers do not push main.
+
+2. ORIGINAL REFERENCE MATERIAL
+
+reference_inputs/ preserves the two supplied sketches and Pasted text(4).txt.
+These are background inputs. The old pasted process is not a replacement
+for the reviewed blueprint and work orders in repository/mcp/os_foundation/.
+
+archive/ preserves the earlier SHAKTI_OS_FOUNDATION_v0_1.zip unchanged.
+That earlier archive predates the repository setup and complete work-order
+handoff. Use repository/ for the current starting files.
+
+3. INDIVIDUAL FILES
+
+All 24 existing files are also collected in the Shakti_OS folder in Library.
+Their names there are preserved. In this ZIP, repository filenames have
+already been normalized: README.md, README.txt, BLUEPRINT.txt,
+WORK_ORDERS.txt and REPOSITORY_SETUP.txt are in their intended locations.
+Agents with the readable repository do not need to open any ZIP.
+
+4. STATUS
+
+This is a blueprint and C99 interface skeleton, not a bootable OS.
+No compilation or hardware acceptance is claimed by packaging these files.
+Tests that have not run stay NOT_RUN. Review and source integration do not
+make an implementation accepted. Preserve failures and existing logs.
+
+The original SHA256SUMS.txt covers the original package files only. It does
+not cover the added repository instructions, work orders or reference inputs.
+
+No existing file contents were edited for this bundle. No scripts, build
+automation, external links, credentials or remote controls were added.

@@ -1,0 +1,614 @@
+SHAKTI OS FOUNDATION
+Blueprint and interface skeleton, version 0.1
+Prepared 2026-10-31 for Tyler's review
+
+STATUS
+This is response 3: the project blueprint and skeleton.
+It is not a bootable OS, an installer, or a completed implementation.
+The C headers declare the contracts that implementation work must satisfy.
+No compiler, hardware boot, guest OS, or protection test has passed here.
+Detailed agent work orders come after Tyler reviews this package.
+
+01. PURPOSE AND ACCEPTED DIRECTION
+
+Build a visible, owner-installed, offline foundation on a 2023 Dell XPS
+9530 first, with an identified HP machine as the next compatibility target.
+Intel iMac support is later work, not an initial compatibility claim.
+
+The foundation gives Shakti an independent telescope into a running
+64-bit workload. Shakti addresses the foundation through the defined
+17-bit logical interface. Observation is the ordinary policy. Experiments
+and corrections operate on a separate working copy with an unchanged
+baseline. There is no implicit authority to repair the original system.
+
+The foundation must occupy a position from which later observation is
+possible. It must not depend exclusively on reports supplied by the OS
+being observed. It also must not turn every ordinary edit into an operator
+confirmation request.
+
+Shakti is not a GGUF model. An optional external model may help people
+develop code, but no model loader, inference engine, model weights, or
+model-based acceptance authority belongs in this foundation.
+
+The native implementation uses strict C99, fixed-capacity static storage,
+explicit ownership, deterministic record formats, and no general heap.
+No Python, Node, GCC, downloaded build scripts, runtime library discovery,
+network fetches, remote commands, or hidden services are part of the plan.
+
+02. WHAT THE HARDWARE BOUNDARY MEANS
+
+Use the processor's virtualization support to place the observer outside
+the legacy guest. On the initial Intel target this means VMX and extended
+page tables, subject to actual CPU and firmware capability checks.
+CPU-core numbers do not create a privilege boundary. The first proof can
+time-share one physical logical processor between host and test guest.
+Every processor eventually running a guest needs the same enforcement.
+
+The foundation owns the guest's second-stage memory mappings. Guest page
+tables cannot expose foundation-private pages. Observation mappings are
+read-only where observation is the only operation required. The separate
+trial service owns writes to trial storage.
+
+DMA needs its own boundary. CPU page protection alone does not restrict
+device DMA. Before a device can bus-master, either configure and test its
+IOMMU domain or keep that device disabled. No direct device passthrough
+is supported in the initial profile. Interrupt routing, translation-cache
+invalidation, device reset, and DMA completion belong to this contract.
+
+The 17-bit units and 83-bit frames are logical encodings. The CPU executes
+its supported x86-64 instructions; there is no proposed 17-bit CPU mode.
+Neither a small bit width nor a CRC creates access authority.
+
+C99 does not express all required CPU instructions or entry conventions.
+The architecture adapter must contain explicit, reviewed assembly or
+compiler-specific instruction bindings for startup, exceptions, VM entry
+and exit, page-table changes, barriers, and related hardware operations.
+These are declared technical exceptions to portable C99, not hidden C
+extensions scattered through the code. Their exact inventory is a review
+gate before implementation. No alternative compiler changes this fact.
+
+Existing CPU, chipset, device, and motherboard firmware remain external
+hardware dependencies. A custom OS does not prove their internals trusted
+or disable every firmware management feature by existing. The supported
+hardware record must list observed firmware settings and known limits.
+There is no promise of universal visibility, absolute security, or zero
+maintenance for changing hardware and imported operating systems.
+
+03. OWNERSHIP AND THE THREE EXECUTION DOMAINS
+
+FOUNDATION: minimal privileged observation, memory mapping, bounded I/O,
+guest execution, audit commits, and trial-copy management.
+
+SHAKTI: its own protected native execution environment, outside the legacy
+guest. It can request observations, read published results, and work on
+authorized trial objects. It does not need unrestricted host privilege.
+
+The proposed x86-64 native environment is ring 3 under foundation-owned
+host page tables. A small scheduler and explicit syscall/return adapter
+are required; they are not supplied by the legacy guest. The first profile
+activates one logical CPU; at most four may be active after their tests.
+Up to 64 CPUs can be discovered, and unused CPUs remain parked. There are
+at most 16 native contexts. Every native/interrupt/VM-exit stack and guard
+must fit the fixed 16 MiB stack budget; discovering CPUs does not allocate
+new stacks or authorize starting them.
+
+LEGACY GUEST: the selected old OS and applications running within assigned
+RAM and virtual devices. Its runtime may have properties forbidden in our
+native code. Observing an existing OS is not a claim that its internals
+have been rewritten in C99 or made heap-free.
+
+Foundation-private state: foundation read/write; no guest mapping; Shakti
+uses named services rather than unrestricted pointers into these pages.
+
+Observation request pages: Shakti writes uncommitted requests; foundation
+copies a committed request into private fixed storage and validates it.
+The client cannot change the private validated copy during execution.
+
+Observation result pages: foundation publishes; Shakti reads. Guest access
+is absent. Request and result areas occupy different protection pages.
+
+Guest RAM: guest receives its declared rights. Foundation has separately
+controlled observation mappings. Shakti receives bounded results, not
+guest-supplied native pointers or writable aliases.
+
+Flow arena: Shakti actors have declared views and writers; foundation
+manages protection. Shared meaning is represented by shared bytes and
+explicit descriptors, not accidental overlap between unrelated C objects.
+
+04. MEMORY MODEL: FIXED OBJECTS WITH OVERLAPPING VIEWS
+
+Capacities are chosen before building an image. No runtime resizing,
+malloc family, variable-length array, alloca, recursion, or unbounded
+stack growth is permitted in native code. Typed tables can use occupied
+counts within their declared arrays; this does not create a general heap.
+
+All storage is declared as static objects or fixed linker reservations.
+Physical backing is bound once at boot from the actual usable memory map.
+It may be physically fragmented while presenting fixed virtual ranges.
+Never assume installed RAM is one usable contiguous span. Exclude firmware,
+MMIO, reserved memory, and other owners' ranges before binding any page.
+
+Boot-time binding is an explicit distinction: a fixed object still needs
+physical pages. UEFI page reservations made before ExitBootServices must
+use predetermined, bounded counts. No AllocatePool-based allocator is
+introduced. After handoff, no object or page-table pool can grow. A board
+unable to back the profile is rejected with its exact shortfall.
+
+A small PE/COFF UEFI loader and a separate 64-bit foundation image avoid
+assuming a multi-gigabyte reservation fits into one firmware executable.
+The loader must support the selected foundation image format explicitly.
+Image layout, relocations, ABI, large static objects, and fixed page-table
+capacity are toolchain qualification tests, not assumptions.
+
+Initial review profile, in binary units:
+  Foundation-private budget:           256 MiB
+  Observation and service budget:      512 MiB
+  Shakti circulation arena:          2,048 MiB
+  Legacy guest RAM reservation:      8,192 MiB
+  Total declared budget:            11,008 MiB (10.75 GiB)
+  Minimum usable RAM for this profile: 12 GiB
+
+These are proposed engineering defaults, not a claim about the actual
+machine's RAM. The boot check uses usable bytes, not its advertised size.
+The 8 GiB guest reservation does not select or certify a guest OS.
+
+Foundation-private subdivision, all within 256 MiB:
+  Boot state and copied platform tables:  4 MiB
+  Page tables and virtualization state: 64 MiB
+  Device state and fixed DMA metadata:  32 MiB
+  Early audit queue:                    16 MiB
+  Baseline/trial indices:               64 MiB
+  Owner/configuration state:             4 MiB
+  Bounded stacks:                       16 MiB
+  Foundation code and read-only data:   16 MiB
+  Explicit unassigned reserve:          40 MiB
+The reserve has no runtime allocator. Using it requires a profile revision.
+
+Observation/service subdivision, all within 512 MiB:
+  Snapshot A:          64 MiB
+  Snapshot B:          64 MiB
+  Trace records:      64 MiB
+  Storage I/O staging: 64 MiB
+  Trial block cache: 128 MiB
+  Request/control:     4 MiB
+  Display staging:    32 MiB
+  Source maps:         8 MiB
+  Explicit reserve:   84 MiB
+
+The circulation arena defaults to 2 GiB because Tyler made sizing flexible.
+This is not ten pods and not an exact runtime percentage. On a 16 GiB
+machine it is 12.5%. A different fixed profile can be built after budget
+validation. The image records the exact profile and never silently shrinks.
+
+Initial circulation subdivision:
+  Resident knowledge: 512 MiB
+  Recall and memories:512 MiB
+  Current context:    512 MiB
+  Working focus:      256 MiB
+  Circulation scratch:256 MiB
+
+These are owner regions within the same fixed arena. A reasoning view can
+include slices of knowledge, recall, context, and focus without copying
+their contents. Overlap does not add capacity or create extra storage.
+Each view declares its slices, readers, single writer, generation, and
+release condition. Protectable slices must align to hardware pages.
+Sub-page semantic slices still need software bounds checks.
+
+Use offsets and lengths for byte views. Do not create invalid overlapping
+C object definitions or violate alignment/effective-type rules by casting
+arbitrary bytes to structs. Native structs are not serialized wire images.
+
+05. SENSORY FLOW AND CONTEXT CIRCULATION
+
+The supplied sketches guide data lifetimes and interfaces. Their circles
+do not require physically circular RAM. Their older labels do not import
+an Internet service, a Swift dependency, or an external protocol runtime.
+
+One logical beat has 64 hearing slices and 32 sight frames. Logical time
+is distinct from wall-clock time. The chosen execution rate may change
+while the 1:64:32 relationship stays fixed. Text pace is separate.
+
+Every packet has source identity, epoch, beat, channel, slot, byte span,
+generation, and validity. Preparation happens ahead of its assigned slot.
+The gate holds a packet; it does not stop the heartbeat waiting for input.
+Late or missing input gets an explicit GAP record. Queue exhaustion never
+silently changes the time ratio or drops data without accounting.
+
+Full sensory payloads have short ownership periods. Recirculating context
+contains references, selected observations, and recorded reasoning state.
+Raw memory may be reused only after its readers release that generation.
+The audit archive is separate and is not recycled with sensory buffers.
+
+The foundation supplies timing, bounded delivery, observation, and storage
+contracts. It does not implement or redefine Shakti's learning algorithm.
+No external helper model is included in this data path.
+
+06. THE TELESCOPE: WHAT IT CAN ACTUALLY SHOW
+
+There are three evidence classes:
+  DIRECT: a recorded machine, memory, or storage observation.
+  DECLARED: an event emitted by an instrumented training program.
+  DERIVED: an interpretation produced from DIRECT/DECLARED records using
+           a named decoder and its version.
+Never present a DECLARED or DERIVED event as independent hardware proof.
+
+Our training code can emit fixed events at function entry/exit, named
+stages, reads, writes, comparisons, and failures. Each event carries a
+source/build identity and stable file/function identifiers. The build
+manifest maps these identifiers to source locations. The trace hooks and
+their overhead are visible parts of the build; no compiler auto-injection
+is assumed or hidden.
+
+Files do not execute as files. Executable code, mapped pages, buffers,
+instructions, and storage operations must be related through explicit
+maps. Raw memory alone does not identify arbitrary files or their meaning.
+An unmodified legacy OS needs a version-specific decoder or cooperative
+adapter for semantic labels. The lower observation path remains distinct.
+
+Capture modes:
+  LIVE_SAMPLE: the subject may change during the observation. Report the
+               start/end sequence and never call it a consistent snapshot.
+  QUIESCED: briefly pause relevant guest vCPUs and quiesce or exclude
+            relevant device DMA while taking the capture. Report exactly
+            which state was frozen. This is a declared observation action.
+
+Pausing CPUs alone is insufficient if devices can still modify memory.
+For the first test guest there are no guest DMA devices or passthrough.
+Do not claim application-consistent disk state from an arbitrary live copy.
+Baseline import initially requires a stopped source or an independently
+established consistent image.
+
+Snapshot buffers A and B support bounded publication. A reader holds one
+generation while the writer prepares another. On exhaustion, return BUSY
+and record the gap; do not overwrite an in-use generation. Larger reads
+are explicit batches and are not one atomic whole-system snapshot unless
+the subject remained quiesced for the whole declared capture interval.
+
+Access is limited by the actual CPU/firmware, DMA configuration, selected
+devices, OS mappings, and encryption. This blueprint does not promise
+visibility through confidential-computing protections or unknown keys.
+
+07. PROTOCOL, VALIDATION, AND AUTHORITY
+
+The canonical 83-bit envelope occupies 16 stored bytes:
+  Bits 0..63:   payload token, unsigned little-endian.
+  Bits 64..80:  17-bit vector.
+  Bits 81..82:  reported gate state.
+  Bits 83..95:  zero padding.
+  Bits 96..127: CRC32C of stored bytes 0..11, little-endian.
+
+The vector's low 12 bits are a service number. Its high 5 bits are a
+channel number. Unknown service/channel values are rejected, not coerced.
+The channel number must match the actual mapped sender endpoint.
+The payload token's low 32 bits are a request-slot index; its high 32 bits
+are that slot's generation. It is never a native pointer.
+
+Gate values retain 0=quarantined, 1=pending, 2=recorded, 3=confirmed as
+reported states. A caller setting 3 grants no privilege. The service's
+authority comes from the endpoint and owner-installed local policy.
+
+A request uses a canonical 128-byte descriptor, defined in CONTRACTS.txt.
+Response descriptors are also 128 bytes. Struct padding is never written
+to disk or shared as a protocol. Use explicit little-endian encoding.
+Counts, offsets, rights, arithmetic overflow, generation, and request ID
+are checked before accessing the requested object.
+
+64 request slots and 64 response slots are fixed at build time. A slot
+generation must never wrap. The session stops accepting new work before
+identifier exhaustion. The requester cannot recycle a slot still in use.
+Generation/commit synchronization requires actual architecture barriers
+and atomic operations; volatile alone is not a synchronization primitive.
+
+The logical Unit17 data codec remains a separate optional content format:
+16 payload bits and one continuation bit. It is not required to rewrite
+every byte of an imported disk or translate x86 instructions into a small
+IR. Its exact framing and padding rules are recorded in CONTRACTS.txt.
+
+No request implements WRITE_ORIGINAL, automatic repair of guest RAM, remote
+command execution, or a default network service. New services require a
+versioned contract and review, not acceptance of unknown opcodes.
+
+08. BASELINES, TRIAL COPIES, AND COMPARISON
+
+An imported baseline is identified, sized, and hashed before it is accepted.
+It is exposed read-only to trial services. Originals are never normalized,
+rewritten, flattened to 256 symbols, or implicitly converted.
+
+A trial references the baseline and stores changed 4 KiB logical blocks
+in separate append-only extents. Reads select the newest committed block
+for that trial or fall back to the baseline. This avoids a full RAM clone.
+It is copy-on-write storage using fixed tables, not a heap allocator.
+
+The v0.1 profile supports four active trial descriptors and a shared fixed
+index of 1,048,576 changed-block entries. Each 32-byte native index entry
+must fit the declared index budget, checked by the implementation. Total
+indexed changed payload is at most 4 GiB across those active trials.
+Exceeding any limit returns BENCH/CAPACITY and preserves prior commits.
+A larger declared profile requires another reviewed build.
+
+Each trial operation records baseline identity, trial identity, request
+identity, source/build identity, operation, input/output evidence, tests,
+and resulting status. No public API applies a trial to the original.
+Exporting a candidate produces a new named object with its own receipt.
+
+Difference classifications are separate:
+  CHANGED: bytes differ from the recorded baseline.
+  AUTHORIZED / NOT_AUTHORIZED / UNKNOWN: evaluated against a named rule.
+  TEST_PASS / TEST_FAIL / NOT_TESTED: result of a named executed test.
+Changed bytes alone do not establish intent or usefulness.
+
+09. STORAGE AND AUDIT WITHOUT DELETION
+
+Start with a small extent store and journal, not a complete new encrypted
+filesystem. Choose one actual storage controller for the first board.
+AHCI and NVMe are separate implementations, not interchangeable names.
+Discover and honor 512-byte or 4096-byte device sectors; use 4096-byte
+logical records with checked sector conversion and alignment.
+
+Disk extents are defined in an owner-reviewed installation manifest.
+Never infer that the whole 1 TB disk is available, format it automatically,
+or turn advertised capacity into a larger binary-unit capacity.
+Guest-visible storage never includes foundation audit extents.
+
+Audit records append only. They have sequence, logical tick, epoch,
+subject, payload length, previous-record hash, payload hash, and commit
+evidence. CONTRACTS.txt defines the on-disk framing. CRC32C checks accidental
+corruption; SHA-256 chains bind contents and order. Neither is a signature.
+An externally retained trusted checkpoint is needed to detect a complete
+history rewrite or rollback by an actor able to replace the whole store.
+No such export occurs automatically or over a network.
+
+The journal driver uses ordered writes, flushes, and readback according to
+the chosen device. A receipt is durable only after the commit and flush
+complete. Unsupported flush semantics prevent a durability claim.
+
+Early boot uses a fixed RAM audit queue and explicitly marks its entries
+NOT_DURABLE. Once storage is ready, drain it in order before claiming an
+audited session. Logging storage writes does not recursively log every
+internal journal write; the top-level operation and failures are recorded.
+
+Recovery validates committed records and reports incomplete tails. It
+preserves partial bytes, starts a new segment, and never repairs evidence
+in place. Shutdown, restart, and capacity failures are visible events.
+
+Warn at 80%, 90%, and 95% of the configured audit extent. Preserve the final
+1% for capacity/fault records. At the normal-write limit, reject new trial
+writes and required-audit operations. Mark observation AUDIT_FULL and stop
+accepting further persistent capture. Do not silently wrap, prune, delete,
+or claim new observations were recorded. The guest is not silently paused
+or repaired as a side effect of log fullness.
+
+One terabyte postpones exhaustion; it does not eliminate the need for this
+defined boundary. Display both used bytes and remaining usable bytes.
+
+No encryption is claimed in this release. The old unspecified CryptoSlot
+and password-vault claims are removed. Encryption, key derivation, recovery,
+and authenticated checkpoints need their own complete reviewed contracts
+before any component advertises those properties.
+
+10. STRICT NATIVE BUILD CONTRACT
+
+Language: ISO C99 for portable code; every hardware-specific exception is
+isolated and listed. Require 8-bit bytes and exact 8/16/32/64-bit unsigned
+types. Enforce the chosen ABI rather than guessing its layout.
+
+No malloc, calloc, realloc, free, aligned allocation, variable-length
+arrays, alloca, recursion, system, popen, process spawning, dynamic loader,
+hidden generated code, downloaded build steps, or runtime code injection.
+The shipped code imports no host C runtime. Implement necessary bounded
+copy/clear/compare and integer helpers as owned reviewed C99 modules.
+
+No signed-overflow assumptions, unchecked shift counts, pointer arithmetic
+outside objects, uninitialized padding, unbounded formatting, or implicit
+endianness. All failure paths return defined statuses. Overflow reports
+BENCH with the resource and requested/capacity values. Do not convert a
+rejected request into a partial success.
+
+All stacks are statically reserved. Inventory call chains, maximum local
+objects, interrupt nesting, and the generated instructions. A guard page
+detects some overflow; it does not replace a stack bound. Bound all loops
+with input sizes, table counts, or explicit execution fuel.
+
+The smaller compiler is not selected in this package. No GCC command is
+included or has been run. Its qualification is a build task, not permission
+to relax C99, stack, heap, or artifact requirements. Inspect compiler,
+assembler, linker, their libraries, startup files, and bootstrap provenance.
+Small size or a successful self-build does not itself establish trust.
+
+If the compiler itself uses a heap, it does not meet a zero-heap toolchain
+claim. Record that failure; do not rename an allocator or hide it behind a
+static wrapper. A conforming toolchain must be supplied or implemented
+before native build acceptance. This blueprint does not pretend that task
+has already been solved.
+
+Qualification must demonstrate strict diagnostics, 64-bit arithmetic,
+alignment, ABI, explicit assembly support, ELF64 or the selected foundation
+format, PE/COFF boot output, large fixed reservations, no unintended imports,
+reproducible bytes under declared inputs, and inspectable machine output.
+Do not translate another compiler's flags blindly or accept ignored flags.
+
+Tools are invoked as separate reviewed steps. A packaging tool may read
+and write declared files; it may not launch the compiler or another tool.
+No shell scripts, build scripts, or subprocess-driven build orchestrator
+are delivered. The future assembly README integration must use Tyler's
+actual existing tool; this package does not invent a replacement for it.
+
+Hosted file utilities, if needed later, must expose their approved adapter.
+They read actual files with fgetc and report their runtime dependency
+explicitly. Bare-metal code cannot pretend hosted stdio is available.
+Tool qualification must settle this adapter before executing such a tool.
+
+Generated file outputs use a new temporary name, validate the complete
+result, and publish only to an absent destination. Refuse existing final
+or temporary names. Atomic publication/no-overwrite semantics must be
+provided by the selected filesystem or exclusive-writer contract; do not
+claim that portable C99 rename alone solves concurrent-writer races.
+
+11. DETERMINISM AND WHAT VALIDATION CAN CLAIM
+
+Native logic: identical declared state, inputs, event order, profile, and
+policy must produce identical records and results. Use integer arithmetic
+and canonical encoding. Keep wall-clock display metadata out of semantic
+results unless explicitly declared as an input.
+
+Imported general-purpose guests are not automatically deterministic. CPU
+timers, asynchronous I/O, scheduling, devices, and additional cores affect
+their behavior. Record observation order and scope; do not claim complete
+guest replay until all required nondeterministic inputs are captured and
+controlled for that supported profile.
+
+Source inspection is REVIEWED, not RUN_PASS. A compiled module is not a
+booted machine. A simulated fault is not proof of hardware isolation.
+Two identical outputs prove repeatability for those runs, not all inputs.
+Use the evidence labels and gates in ACCEPTANCE.txt without substitution.
+
+12. MODULE MAP AND DEPENDENCY ORDER
+
+All future native project work lives under mcp/os_foundation in the current
+Shakti repository. This package is a review copy; it has not been inserted
+into or pushed to that repository. There are no credentials in it.
+
+The interface skeleton supplied now:
+  include/sf_base.h       exact-width assumptions, statuses, shared types
+  include/sf_config.h     fixed initial profile and all interface capacities
+  include/sf_memory.h     region/view/boot-map contracts
+  include/sf_protocol.h   services and canonical request/response contracts
+  include/sf_observer.h   trace and capture contracts
+  include/sf_storage.h    baseline, trial, and audit contracts
+  include/sf_platform.h   hardware boundary and capability requirements
+  include/sf_flow.h       sensory and circulation contracts
+
+Planned implementation modules; no empty source files are supplied:
+  spec/profile.c              immutable descriptor tables
+  core/bytes.c                bounded byte operations and checked arithmetic
+  core/wire.c                 explicit wire encoding/decoding
+  core/crc32c.c               corruption check with known-answer tests
+  core/sha256.c               content hash with known-answer tests
+  codec/unit17.c              optional data codec, not guest execution
+  boot/uefi_entry.c           visible firmware entry and bounded handoff
+  boot/image_loader.c         declared image format and fixed reservations
+  arch/x86_64/entry.S         explicit CPU entry boundary
+  arch/x86_64/exceptions.S    explicit exception boundary
+  arch/x86_64/vmx_entry.S     explicit VM entry/exit boundary
+  arch/x86_64/native_entry.S  explicit ring-3 syscall/return boundary
+  arch/x86_64/platform.c      CPU/table discovery and adapter
+  arch/x86_64/paging.c        host and second-stage mappings
+  arch/x86_64/dma.c           IOMMU and device isolation
+  memory/views.c             checked ownership, generations, publication
+  native/schedule.c          fixed native contexts and bounded scheduling
+  observe/capture.c          live and quiesced bounded captures
+  observe/trace.c            declared execution events and source maps
+  observe/guest_decode.c     selected OS version's semantic interpretation
+  storage/block.c            bounded block interface
+  storage/controller.c       exactly one selected initial controller
+  storage/extent.c           fixed extent store
+  storage/journal.c          append/flush/recovery
+  storage/trial.c            baseline plus separate changed blocks
+  guest/test_guest.c         explicit integration-test guest
+  guest/legacy_profile.c     selected real OS boot/device contract
+  guest/devices.c            selected virtual devices and bounded queues
+  devices/input.c            selected local keyboard/input controller
+  bridge/service.c           validated request dispatch
+  flow/schedule.c            1:64:32 packet schedule and explicit gaps
+  flow/text_utf8.c           bounded scalar counting for text views
+  flow/views.c               Shakti circulation views
+  console/status.c           visible boot, capacity, and fault display
+  tools/image_pack.c         future standalone C image packaging tool
+  tools/audit_export.c       future standalone plain-text export tool
+  tests/                      executed tests, added with implementations
+
+Dependency gates:
+  G0: profile/contracts review and toolchain qualification are recorded.
+  G1: byte/hash/wire modules pass their independent tests.
+  G2: visible boot, fixed memory, exceptions, and mappings pass on hardware.
+  G3: isolated test guest and telescope pass access/capture tests.
+  G4: controller, extents, durable journal, and recovery pass storage tests.
+  G5: trial copies and comparison receipts pass without original writes.
+  G6: selected real OS boots with its declared devices and observation scope.
+  G7: Shakti flow integration preserves lifetimes, ratios, and audit limits.
+  G8: second identified PC repeats the applicable hardware acceptance suite.
+
+G1 software work can proceed once its needed toolchain contract is met;
+no dependent hardware claim advances on a document review alone. Storage
+work can be developed independently after G1 and combined before G5.
+Detailed individual work orders are intentionally deferred until review.
+
+13. LEGACY BOOT AND CROSS-MACHINE COMPATIBILITY
+
+The 2023 XPS 9530 generation is established. Exact CPU, RAM, firmware,
+storage controller, display mode, and usable virtualization features are
+still discovered and recorded at boot. The HP model is not yet identified.
+
+The legacy OS name/version has not been supplied. It is an explicit G6
+input, not an excuse to weaken earlier contracts or claim generic support.
+A real guest needs virtual storage, interrupts, timers, console/input,
+firmware or an OS-specific boot protocol, and compatible device behavior.
+An arbitrary old disk image is not made bootable by placing it in RAM.
+Local input after firmware handoff requires an owned hardware driver for
+the selected keyboard/controller. UEFI Boot Services input cannot be used
+after ExitBootServices. Device implementations must not be hidden inside
+an alleged already-working guest launcher.
+
+The initial integration test uses a small owned test guest. Its success
+must never be presented as Windows, Linux, or macOS compatibility.
+No opaque guest BIOS or firmware image is silently added to make a demo
+boot. Any required guest firmware becomes a named implementation scope.
+
+Distribute the eventual release as a deterministic bootable USB image and
+an installation manifest. An ISO may be another container after its boot
+path is tested. No destructive disk installation is authorized by this
+blueprint. No installer or boot image is included in this review package.
+
+14. CORRECTIONS TO THE ORIGINAL WORKBOOK
+
+Core 0 versus Core 1: replace implied authority with actual virtualization
+and DMA boundaries; retain observation as the ordinary operating policy.
+
+17-bit supervisor: retain logical encodings, remove an unsupported CPU mode.
+83-bit frame: distinguish 83 logical bits from 128 stored bits including
+padding and CRC. A received gate value never authorizes itself.
+
+Ten pods: remove. Use a fixed circulation arena with explicit overlapping
+views, distinct from short-lived sensory flow and permanent audit storage.
+
+UTF/legacy stripping: remove automatic destructive conversion. Preserve
+original bytes. A display/export conversion is a separate named result.
+The proposed Euphoria token table is not a mandatory foundation dependency.
+
+Seven-family IR: it cannot execute an existing x86-64 OS. A restricted
+training interpreter can be a later separate project if actually needed.
+
+Readonly editor micro-windows: remove as a universal editing policy.
+Use ordinary declared writable data regions and protect foundation code.
+Do not impose a blanket guest W^X policy that breaks an unmodified OS
+without declaring that compatibility restriction.
+
+XML/crypto slot: separate serialization, corruption detection, hashing,
+and cryptography. No signature/encryption claim follows from a CRC hook.
+
+VaultFS, HTTP router UI, cookie display, OCR/PDF tools, and full desktop:
+remove from the critical footing path. Their purposes are future feature
+work, with their own contracts, if still wanted after the base works.
+
+Boot as Job 13: move hardware feasibility to the beginning of the build.
+Every hardware interrupt written synchronously to disk: replace with
+bounded event classes, explicit gaps, and a non-recursive journal path.
+
+Signed validation receipt: reserve that description for an actual signature
+scheme. Use factual test receipts with explicit execution evidence now.
+
+15. REVIEW DECISIONS AND HONEST LIMITS
+
+Review the fixed initial budgets, the explicit hardware instruction layer,
+the boot-time binding of fixed objects, publication rules, capacity policy,
+and the guest/host separation. These are the consequential choices.
+
+No source implementation, firmware setup, compiler qualification, actual
+CPU capability result, real guest boot, disk-write test, cryptographic
+implementation test, or power-interruption test exists in this package.
+
+The first native build may proceed only with the qualified non-GCC tools.
+The first legacy compatibility claim requires an identified guest OS and
+an actual successful G6 run. The next step after Tyler's review is to issue
+small work orders against these interfaces, each with inputs, outputs,
+limits, errors, dependencies, and executed acceptance evidence.
