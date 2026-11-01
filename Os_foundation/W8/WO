@@ -1,0 +1,63 @@
+# W08 flow packet encoding
+
+**User:** @TylerALofall
+
+## @TylerALofall
+
+-- W08: flow packet encoding ---
+You are assigned W08 in this repository.
+Start from the current foundation/integration branch and record its SHA.
+Read AGENTS.md, README.md, mcp/os_foundation/CONSTITUTION.md, the common
+instructions and your work order in mcp/os_foundation/WORK_ORDERS.txt,
+the relevant contracts, and your interface headers before editing.
+Create your own work/W08 branch. Own only the files assigned
+to your order and your review/W08 evidence directory.
+Deliver complete reviewed source and meaningful tests. Keep unrun tests
+marked NOT_RUN. Open a pull request into foundation/integration containing
+your changes, actual test evidence, dependency SHAs, and remaining blockers.
+Coordinate shared-header or merge changes through W00. Never push main.
+ 
+NOTE FROM W00 - THE TREE IS OFF
+The files are not in the documented layout yet. What the docs call
+mcp/os_foundation/ is currently Os_foundation/, and
+mcp/os_foundation/include/ is currently Os_foundation/Include/
+(capital O and capital I). W00 is moving them. Read the files where
+they are now, and do not move, rename or edit them. Write your own
+files at the documented paths under mcp/os_foundation/.
+If foundation/integration does not exist yet, branch from main,
+record main's SHA, and open your pull request as a draft against main.
+Do not merge it; W00 will point it at foundation/integration.
+
+## Copilot
+
+I'll clone the repo and read the foundation docs first.
+
+No foundation/integration branch exists, so I'm branching from main (SHA b59e780…). Reading the docs.
+
+Only GCC exists on this host (forbidden), so nothing can be compiled or run. I'll author the source and keep every test NOT_RUN.
+
+W08 is written but not published: I couldn't push `work/W08` or open the pull request. Nothing has been compiled or run.
+
+**Why it's blocked:** both `git push` and the GitHub API branch creation returned 403. This session's installation isn't authorized to write to `TylerALofall/Shakti_OS_v0.1`. I didn't try to work around it.
+
+**State**
+- `foundation/integration` doesn't exist, so I branched from `main` at `b59e78071d59f1c5c94318b9328cf74e1093a938`.
+- The commit is local only, at `/root/Shakti_OS_v0.1` on branch `work/W08` (`7eb19b9d8b0891edddad7550dce7e5d832249981`).
+- I read the docs and headers where they sit, in `Os_foundation/` and `Os_foundation/Include/`, and didn't move or edit them. My files are at the documented `mcp/os_foundation/` paths.
+
+**Files**
+- `mcp/os_foundation/flow/packet_wire.c` has `sf_flow_encode` and `sf_flow_decode`. It follows C10 and the C11 check order.
+- `mcp/os_foundation/tests/test_flow_packet.c` has no `main`. It exports `sf_test_flow_packet_run`, which returns the number of failed checks. Expected bytes come from two literal golden arrays and a test-local reference writer and CRC, not from the code under test.
+- `mcp/os_foundation/review/W08/STATE.txt` records the details below.
+
+**Test status:** compiled, executed and hardware are all NOT_RUN.
+- The only compilers here are `gcc` and `cc`, and GCC is forbidden.
+- W01, W02 and W03 haven't been delivered, so there is no qualified toolchain and nothing to link against.
+
+**Questions for W00:** C10 doesn't specify these, so I made the following calls. STATE.txt records them for confirmation.
+1. A valid payload must have length of at least 1.
+2. A valid payload needs READ rights and must not include EXECUTE.
+3. The payload region must be a known region ID from 1 to 12.
+4. "Stale" means generation 0. Comparing against a live lease generation belongs to `sf_flow_take`, which this order doesn't own.
+
+To publish, run a session scoped with write access to the repo, or push `work/W08` yourself and open a draft PR against `main`.
